@@ -22,8 +22,7 @@ typedef struct
     float integral;          		//定义积分值
     float integral_max;
     float integral_min;
-
-
+    _Bool pid_enable;
 }_pid;
 
 extern _pid pid3;
@@ -38,8 +37,12 @@ extern _Bool Pflag3;   // Pflag是布尔型变量
 extern _Bool Iflag3;   // Iflag是布尔型变量
 extern _Bool Iflagz3;  // Iflagz是布尔型变量
 
+extern _Bool pid3_enable;
+extern _Bool pid4_enable;
+
 extern void PID_param_init(void);
-extern void set_pid_target(_pid *pid, float temp_val);
+extern void set_pid_target3(_pid *pid, float temp_val);
+extern void set_pid_target4(_pid *pid, float temp_val);
 extern float get_pid_target(_pid *pid);
 extern void set_p_i_d(_pid *pid, float p, float i, float d);
 extern float PID_realize(_pid *pid, float actual_val, _Bool Pflag, _Bool Iflag, _Bool Iflagz);

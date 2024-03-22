@@ -231,8 +231,8 @@ void set_motor3_direction(motor_dir_t dir)
 void set_motor3_enable(void)
 {
     is_motor3_en = 1;
-//    MOTOR3_FWD_ENABLE();
-//    MOTOR3_REV_ENABLE();
+    MOTOR3_FWD_ENABLE();
+    MOTOR3_REV_ENABLE();
 }
 
 /**
@@ -259,14 +259,14 @@ void set_motor4_speed(uint16_t v)
     if (MOTOR4_direction == MOTOR_FWD)
     {
         MOTOR4_SET_FWD_COMPAER(motor4_dutyfactor);     // 设置速度
-//        MOTOR4_REV_DISABLE();
-//        MOTOR4_FWD_ENABLE();
+        MOTOR4_REV_DISABLE();
+        MOTOR4_FWD_ENABLE();
     }
     else
     {
         MOTOR4_SET_REV_COMPAER(motor4_dutyfactor);     // 设置速度
-//        MOTOR4_FWD_DISABLE();
-//        MOTOR4_REV_ENABLE();
+        MOTOR4_FWD_DISABLE();
+        MOTOR4_REV_ENABLE();
     }
 }
 
@@ -407,7 +407,7 @@ void motor3_pid_control(void)
         {
             set_motor3_direction(MOTOR_REV);
         }
-        temp_val = (fabs(cont_val) > PWM_MAX_PERIOD_COUNT*0.7) ? PWM_MAX_PERIOD_COUNT*0.7 : fabs(cont_val);    // 速度上限处理    判断绝对值是否大于5500的80%，大于则是5500的80%，小于则是绝对值
+        temp_val = (fabs(cont_val) > PWM_MAX_PERIOD_COUNT*0.9) ? PWM_MAX_PERIOD_COUNT*0.9 : fabs(cont_val);    // 速度上限处理    判断绝对值是否大于5500的80%，大于则是5500的80%，小于则是绝对值
         set_motor3_speed(temp_val);                                                                     			 // 设置 PWM 占空比
     }
 }
@@ -445,7 +445,7 @@ void motor4_pid_control(void)
         {
             set_motor4_direction(MOTOR_FWD);
         }
-        temp_val = (fabs(cont_val) > PWM_MAX_PERIOD_COUNT*0.7) ? PWM_MAX_PERIOD_COUNT*0.7 : fabs(cont_val);    // 速度上限处理
+        temp_val = (fabs(cont_val) > PWM_MAX_PERIOD_COUNT*0.9) ? PWM_MAX_PERIOD_COUNT*0.9 : fabs(cont_val);    // 速度上限处理
         set_motor4_speed(temp_val);                                                                     			 // 设置 PWM 占空比
     }
 }

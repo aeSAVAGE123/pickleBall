@@ -58,7 +58,7 @@ void USART_Config(void)
     /** 配置串口接收中断 */
     __HAL_UART_ENABLE_IT(&UartHandle,UART_IT_RXNE);
 
-    HAL_NVIC_SetPriority(USART_IRQ, 0, 2);
+    HAL_NVIC_SetPriority(USART_IRQ, 0, 0);
     HAL_NVIC_EnableIRQ(USART_IRQ);
 }
 
@@ -318,8 +318,8 @@ int8_t receiving_process(void)
                     i_temp = (float)group2/1000.0f;
                     d_temp = (float)group3/1000.0f;
 
-                    set_p_i_d(&pid3,p_temp, i_temp, d_temp);
-
+                   set_p_i_d(&pid3,p_temp, i_temp, d_temp);
+                    set_p_i_d(&pid4,p_temp, i_temp, d_temp);
                     /**处理完一帧数据后将rd_p移到下一个数据帧开头 */
                     rd_p = (rd_p+4) % max_length;
                 }
@@ -330,7 +330,8 @@ int8_t receiving_process(void)
                     LED3_TOGGLE
                     tmp_para = mergeParametersToUint64();
                     uint16_t speed = (uint16_t)tmp_para;
-                    set_motor3_speed(speed);
+                   set_motor3_speed(speed);
+                    set_motor4_speed(speed);
                     /** 处理完一帧数据后将rd_p移到下一个数据帧开头 */
                     rd_p = (rd_p+3) % max_length;
                 }
@@ -341,7 +342,8 @@ int8_t receiving_process(void)
                     LED4_TOGGLE
                     tmp_para = mergeParametersToUint64();
                     float targetLocation = (float)tmp_para;
-                    set_pid_target(&pid3, targetLocation);
+                set_pid_target3(&pid3, targetLocation);
+                    set_pid_target4(&pid4, targetLocation);
                     /** 处理完一帧数据后将rd_p移到下一个数据帧开头 */
                     rd_p = (rd_p+3) % max_length;
                 }

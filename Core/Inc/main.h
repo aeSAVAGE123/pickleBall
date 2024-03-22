@@ -33,7 +33,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
-
+extern _Bool firststart;;
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 

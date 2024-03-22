@@ -203,17 +203,17 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-    unsigned char i;
-    TimingDelay_Decrement();
-    TimeStamp_Increment();
-
-    for(i=0;i<NumOfTask;i++)
-    {
-        if(Task_Delay[i])
-        {
-            Task_Delay[i]--;
-        }
-    }
+//    unsigned char i;
+//    TimingDelay_Decrement();
+//    TimeStamp_Increment();
+//
+//    for(i=0;i<NumOfTask;i++)
+//    {
+//        if(Task_Delay[i])
+//        {
+//            Task_Delay[i]--;
+//        }
+//    }
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -236,69 +236,81 @@ void BASIC_TIM_IRQHandler (void)
     HAL_TIM_IRQHandler(&TIM_TimeBaseStructure1);
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void BASIC_TIM5_IRQHandler (void)
 {
-    if(htim==(&TIM_TimeBaseStructure1)) {
-        LED1_TOGGLE
-//      set_computer_Speed_Location_value(Send_Speed_CMD,positiondown_adc_mean);
-        set_computer_Speed_Location_value(Send_Speed_CMD,positionup_adc_mean);
-		if (fabs(pid4.err) >= 500 )
-		{
-                Pflag4 = 1;
-				Iflag4 = 0;
-				Iflagz4 = 0;
-        }
-		else if (fabs(pid4.err) >= 50 && fabs(pid4.err) < 500)
-		{
-                Pflag4 = 1;
-				Iflag4 = 1;
-				Iflagz4 = 0;
-        }
-		else if (fabs(pid4.err) < 50)
-		{
-                Pflag4 = 1;
-				Iflag4 = 0;
-				Iflagz4 = 1;
-        }
+    HAL_TIM_IRQHandler(&TIM_TimeBaseStructure5);
+}
 
-        if (fabs(pid3.err) >= 500 )
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim == (&TIM_TimeBaseStructure1))
+    {
+        LED1_TOGGLE
+//        set_computer_Speed_Location_value(Send_Speed_CMD, positiondown_adc_mean);
+        set_computer_Speed_Location_value(Send_Speed_CMD,positionup_adc_mean);
+        if (pid3_enable)
         {
-            Pflag3 = 1;
-            Iflag3 = 0;
-            Iflagz3 = 0;
-        }
-        else if (fabs(pid3.err) >= 50 && fabs(pid3.err) < 500)
-        {
-            Pflag3 = 1;
-            Iflag3 = 1;
-            Iflagz3 = 0;
-        }
-        else if (fabs(pid3.err) < 50)
-        {
-            Pflag3 = 1;
-            Iflag3 = 0;
-            Iflagz3 = 1;
-        }
-//			updateFlagsForPID(&pid4,Pflag4,Iflag4,Iflagz4,500,50);
+            if (fabs(pid3.err) > 200)
+            {
+                Pflag3 = 1;
+                Iflag3 = 0;
+                Iflagz3 = 0;
+            } else if (fabs(pid3.err) > 50 && fabs(pid3.err) <= 200)
+            {
+                Pflag3 = 1;
+                Iflag3 = 1;
+                Iflagz3 = 0;
+            } else if (fabs(pid3.err) <= 50)
+            {
+                Pflag3 = 1;
+                Iflag3 = 0;
+                Iflagz3 = 1;
+            }
             motor3_pid_control();
-            motor4_pid_control();
+        }
+        if(pid4_enable)
+        {
+                if (fabs(pid4.err) > 200 )
+                {
+                    Pflag4 = 1;
+                    Iflag4 = 0;
+                    Iflagz4 = 0;
+                }
+                else if (fabs(pid4.err) > 50 && fabs(pid4.err) <= 200)
+                {
+                    Pflag4 = 1;
+                    Iflag4 = 1;
+                    Iflagz4 = 0;
+                }
+                else if (fabs(pid4.err) <= 50)
+                {
+                    Pflag4 = 1;
+                    Iflag4 = 0;
+                    Iflagz4 = 1;
+                }
+                motor4_pid_control();
+        }
+    }
+
+    if (htim == (&TIM_TimeBaseStructure5))
+    {
+        if (firststart == 0)
+        {
+            firststart = 1;
+        }
+        else
+        {
+            LED2_TOGGLE
+            pid3_enable = 0;
+            MOTOR3_FWD_DISABLE();
+            MOTOR3_REV_DISABLE();
+            pid4_enable = 0;
+            MOTOR4_FWD_DISABLE();
+            MOTOR4_REV_DISABLE();
+            HAL_TIM_Base_Stop_IT(&TIM_TimeBaseStructure5);
+        }
     }
 }
 
-//uint8_t dr;
-//volatile uint8_t sr_status;
-////接收数组指针
-//extern unsigned char UART_RxPtr;
-///**
-//  * @brief 串口中断服务函数
-//  */
-//void DEBUG_USART_IRQHandler(void)
-//{
-//    sr_status = UartHandle.Instance->SR & (1<<3);//clear SR register ORE bit status
-//    dr = UartHandle.Instance->DR;
-//    protocol_data_recv(&dr, 1);
-//    HAL_UART_IRQHandler(&UartHandle);
-//}
 
 void ADC_POSITION_IRQHandler(void)
 {
@@ -330,7 +342,7 @@ void USART_IRQHandler(void)
     HAL_UART_IRQHandler(&UartHandle);
     __HAL_UART_ENABLE_IT(&UartHandle,UART_IT_RXNE);
 }
-void BLT_UARTx_IRQHandler(void)
-{
-    bsp_USART_Process();
-}
+//void BLT_UARTx_IRQHandler(void)
+//{
+//    bsp_USART_Process();
+//}
