@@ -24,6 +24,10 @@
 #define LED5_PIN                  GPIO_PIN_4
 #define LED5_GPIO_PORT            GPIOE
 #define LED5_GPIO_CLK_ENABLE()    __HAL_RCC_GPIOE_CLK_ENABLE()
+
+#define BLT_LED_PIN                  GPIO_PIN_12
+#define BLT_LED_GPIO_PORT            GPIOB
+#define BLT_LED_GPIO_CLK_ENABLE()    __HAL_RCC_GPIOB_CLK_ENABLE()
 /************************************************************/
 
 
@@ -77,6 +81,10 @@
 #define LED5_TOGGLE		digitalToggle(LED5_GPIO_PORT,LED5_PIN)
 #define LED5_OFF		digitalHi(LED5_GPIO_PORT,LED5_PIN)
 #define LED5_ON			digitalLo(LED5_GPIO_PORT,LED5_PIN)
+
+#define BLT_LED_TOGGLE		digitalToggle(LED5_GPIO_PORT,LED5_PIN)
+#define BLT_LED_OFF		    digitalHi(LED5_GPIO_PORT,LED5_PIN)
+#define BLT_LED_ON			digitalLo(LED5_GPIO_PORT,LED5_PIN)
 
 //(全部打开)
 #define LED_ALLON	\

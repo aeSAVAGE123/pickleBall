@@ -10,15 +10,15 @@ TIM_HandleTypeDef TIM_TimeBaseStructure1;
  */
 static void TIMx_NVIC_Configuration(void)
 {
-    //设置抢占优先级，子优先级
-    HAL_NVIC_SetPriority(BASIC_TIM_IRQn, 3, 0);
-    // 设置中断来源
-    HAL_NVIC_EnableIRQ(BASIC_TIM_IRQn);
-
-    //设置抢占优先级，子优先级
-    HAL_NVIC_SetPriority(BASIC_TIM5_IRQn, 2, 0);
-    // 设置中断来源
-    HAL_NVIC_EnableIRQ(BASIC_TIM5_IRQn);
+//    //设置抢占优先级，子优先级
+//    HAL_NVIC_SetPriority(BASIC_TIM_IRQn, 3, 0);
+//    // 设置中断来源
+//    HAL_NVIC_EnableIRQ(BASIC_TIM_IRQn);
+//
+//    //设置抢占优先级，子优先级
+//    HAL_NVIC_SetPriority(BASIC_TIM5_IRQn, 2, 0);
+//    // 设置中断来源
+//    HAL_NVIC_EnableIRQ(BASIC_TIM5_IRQn);
 }
 
 /*

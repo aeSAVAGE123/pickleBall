@@ -15,38 +15,39 @@
 
 
 /* 定义LED连接的GPIO端口, 用户只需要修改下面的代码即可改变控制的LED引脚 */
-#define BLT_INT_GPIO_PORT    	GPIOA			              /* GPIO端口 */
-#define BLT_INT_GPIO_CLK 	    __HAL_RCC_GPIOB_CLK_ENABLE()		/* GPIO端口时钟 */
-#define BLT_INT_GPIO_PIN		GPIO_PIN_0			          /* 连接到HC05 INT引脚的GPIO */
+#define BLE_INT_GPIO_PORT    	GPIOD			              /* GPIO端口 */
+#define BLE_INT_GPIO_CLK 	    __HAL_RCC_GPIOD_CLK_ENABLE()		/* GPIO端口时钟 */
+#define BLE_INT_GPIO_PIN		GPIO_PIN_0			          /* 连接到HC05 INT引脚的GPIO */
 
 
-#define BLT_KEY_GPIO_PORT    	GPIOA			              /* GPIO端口 */
-#define BLT_KEY_GPIO_CLK 	    __HAL_RCC_GPIOA_CLK_ENABLE()		/* GPIO端口时钟 */
-#define BLT_KEY_GPIO_PIN		GPIO_PIN_1		          /* 连接到HC05 KEY引脚的GPIO */
+#define BLE_WAKEUP_GPIO_PORT    	GPIOC			              /* GPIO端口 */
+#define BLE_WAKEUP_GPIO_CLK 	    __HAL_RCC_GPIOC_CLK_ENABLE()		/* GPIO端口时钟 */
+#define BLE_WAKEUP_GPIO_PIN		GPIO_PIN_12		          /* 连接到HC05 KEY引脚的GPIO */
 
 
 
-#define BLT_KEY_HIGHT  		  HAL_GPIO_WritePin(BLT_KEY_GPIO_PORT, BLT_KEY_GPIO_PIN,GPIO_PIN_SET);
-#define BLT_KEY_LOW  		  HAL_GPIO_WritePin(BLT_KEY_GPIO_PORT, BLT_KEY_GPIO_PIN,GPIO_PIN_RESET);
+#define BLE_WAKEUP_HIGHT  		  HAL_GPIO_WritePin(BLE_WAKEUP_GPIO_PORT, BLE_WAKEUP_GPIO_PIN,1);
+#define BLE_WAKEUP_LOW  		  HAL_GPIO_WritePin(BLE_WAKEUP_GPIO_PORT,BLE_WAKEUP_GPIO_PIN,0)
 
 //IS_HC05_CONNECTED用于检查模块是否处于配对状态
-#define IS_HC05_CONNECTED() 	HAL_GPIO_ReadPin(BLT_INT_GPIO_PORT,BLT_INT_GPIO_PIN	)
+#define IS_BLE_CONNECTED()          (HAL_GPIO_ReadPin(BLE_INT_GPIO_PORT, BLE_INT_GPIO_PIN) == 0)
+
 
 
 /*信息输出*/
-#define HC05_DEBUG_ON         0
-#define HC05_DEBUG_FUNC_ON    0
+#define BLE_DEBUG_ON         0
+#define BLE_DEBUG_FUNC_ON    0
 
-#define HC05_INFO(fmt,arg...)           printf("<<-HC05-INFO->> "fmt"\n",##arg)
-#define HC05_ERROR(fmt,arg...)          printf("<<-HC05-ERROR->> "fmt"\n",##arg)
-#define HC05_DEBUG(fmt,arg...)          do{\
-                                          if(HC05_DEBUG_ON)\
-                                          printf("<<-HC05-DEBUG->> [%d]"fmt"\n",__LINE__, ##arg);\
+#define BLE_INFO(fmt,arg...)           printf("<<-BLE-INFO->> "fmt"\n",##arg)
+#define BLE_ERROR(fmt,arg...)          printf("<<-BLE-ERROR->> "fmt"\n",##arg)
+#define BLE_DEBUG(fmt,arg...)          do{\
+                                          if(BLE_DEBUG_ON)\
+                                          printf("<<-BLE-DEBUG->> [%d]"fmt"\n",__LINE__, ##arg);\
                                           }while(0)
 
-#define HC05_DEBUG_FUNC()               do{\
-                                         if(HC05_DEBUG_FUNC_ON)\
-                                         printf("<<-HC05-FUNC->> Func:%s@Line:%d\n",__func__,__LINE__);\
+#define BLE_DEBUG_FUNC()               do{\
+                                         if(BLE_DEBUG_FUNC_ON)\
+                                         printf("<<-BLE-FUNC->> Func:%s@Line:%d\n",__func__,__LINE__);\
                                        }while(0)
 
 
@@ -59,7 +60,7 @@
 
 
 //最大蓝牙设备数量
-#define BLTDEV_MAX_NUM 5
+#define BLEDEV_MAX_NUM 5
 
 
 
@@ -69,44 +70,44 @@ typedef  struct
     uint16_t NAP;
     uint8_t     UAP;
     uint32_t LAP;
-}BLTAddr;
+}BLEAddr;
 
 typedef  struct
 {
     uint8_t num;		//扫描到的蓝牙设备数量
 
-    BLTAddr addr[BLTDEV_MAX_NUM];	//蓝牙设备地址，数字形式
+    BLEAddr addr[BLEDEV_MAX_NUM];	//蓝牙设备地址，数字形式
 
-    char unpraseAddr[BLTDEV_MAX_NUM][50];	//蓝牙设备地址，字符串形式，方便扫描时和连接时使用
+    char unpraseAddr[BLEDEV_MAX_NUM][50];	//蓝牙设备地址，字符串形式，方便扫描时和连接时使用
 
-    char name[BLTDEV_MAX_NUM][50];	//蓝牙设备的名字
+    char name[BLEDEV_MAX_NUM][50];	//蓝牙设备的名字
 
-}BLTDev;
+}BLEDev;
 
 //蓝牙设备列表，在 bsp_hc05.c 文件中定义
-extern  BLTDev bltDevList;
+extern  BLEDev bleDevList;
 
 
 enum
 {
-    HC05_DEFAULT_TIMEOUT = 200,
-    HC05_INQUIRY_DEFAULT_TIMEOUT = 10000,
-    HC05_PAIRING_DEFAULT_TIMEOUT = 10000,
-    HC05_PASSWORD_MAXLEN = 16,
-    HC05_PASSWORD_BUFSIZE = HC05_PASSWORD_MAXLEN + 1,
-    HC05_NAME_MAXLEN = 32,
-    HC05_NAME_BUFSIZE = HC05_NAME_MAXLEN + 1,
-    HC05_ADDRESS_MAXLEN = 14,
-    HC05_ADDRESS_BUFSIZE = HC05_ADDRESS_MAXLEN + 1,
+    BLE_DEFAULT_TIMEOUT = 200,
+    BLE_INQUIRY_DEFAULT_TIMEOUT = 10000,
+    BLE_PAIRING_DEFAULT_TIMEOUT = 10000,
+    BLE_PASSWORD_MAXLEN = 16,
+    HC05_PASSWORD_BUFSIZE = BLE_PASSWORD_MAXLEN + 1,
+    BLE_NAME_MAXLEN = 32,
+    HC05_NAME_BUFSIZE = BLE_NAME_MAXLEN + 1,
+    BLE_ADDRESS_MAXLEN = 14,
+    BLE_ADDRESS_BUFSIZE = BLE_ADDRESS_MAXLEN + 1,
 };
 
-uint8_t HC05_Init(void);
-uint8_t HC05_Send_CMD(char* cmd,uint8_t clean);
-void HC05_SendString(char* str);
-void strBLTAddr(BLTDev *bltDev,char delimiter);
-uint8_t getRemoteDeviceName(BLTDev *bltDev);
-void printBLTInfo(BLTDev *bltDev);
-uint8_t linkHC05(void);
+uint8_t BLE_Init(void);
+uint8_t BLE_Send_CMD(char* cmd,uint8_t clean);
+void BLE_SendString(char* str);
+void strBLEAddr(BLEDev *bltDev,char delimiter);
+uint8_t getRemoteDeviceName(BLEDev *bltDev);
+void printBLEInfo(BLEDev *bltDev);
+uint8_t linkBLE(void);
 int get_line(char* line, char* stream ,int max_size);
 
 #endif //CPROJECT_BSP_HC05_H

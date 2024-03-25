@@ -1,105 +1,86 @@
-/**
-  ******************************************************************************
-  * @file    bsp_hc05.c
-  * @author  fire
-  * @version V1.0
-  * @date    2019-xx-xx
-  * @brief   HC05驱动
-  ******************************************************************************
-  * @attention
-  *
-  * 实验平台:野火 挑战者 STM32H743 开发板
-  * 论坛    :http://www.firebbs.cn
-  * 淘宝    :https://fire-stm32.taobao.com
-  *
-  ******************************************************************************
-  */
-
 #include "bsp_hc05.h"
 #include "bsp_usart_blt.h"
 #include <string.h>
 #include <stdio.h>
 
 //蓝牙设备列表，在main文件中定义
-extern  BLTDev bltDevList;
+extern  BLEDev bleDevList;
 
 /**
- * @brief  初始化控制LED的IO
+ * @brief  初始化控制GPIO引脚定义
  * @param  无
  * @retval 无
  */
-static void HC05_GPIO_Config(void)
+static void BLE_GPIO_Config(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
 
     /*开启GPIO时钟*/
-    BLT_INT_GPIO_CLK;
-    BLT_KEY_GPIO_CLK;
+    BLE_INT_GPIO_CLK;
+    BLE_WAKEUP_GPIO_CLK;
 
     /* 配置INT引脚为复用功能  */
-    GPIO_InitStruct.Pin = BLT_INT_GPIO_PIN;
+    GPIO_InitStruct.Pin = BLE_INT_GPIO_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(BLT_INT_GPIO_PORT, &GPIO_InitStruct);
+    HAL_GPIO_Init(BLE_INT_GPIO_PORT, &GPIO_InitStruct);
 
-    /* 配置KEY引脚为复用功能  */
-    GPIO_InitStruct.Pin = BLT_KEY_GPIO_PIN;
+    /* 配置WAKEUP引脚为复用功能  */
+    GPIO_InitStruct.Pin = BLE_WAKEUP_GPIO_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_NOPULL ;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(BLT_KEY_GPIO_PORT, &GPIO_InitStruct);
+    HAL_GPIO_Init(BLE_WAKEUP_GPIO_PORT, &GPIO_InitStruct);
 
+    BLE_WAKEUP_HIGHT
 }
 
 
-
-
-
 /**
- * @brief  向HC05模块发送命令并检查OK。只适用于具有OK应答的命令
+ * @brief  向BLE模块发送命令并检查OK。只适用于具有OK应答的命令
    * @param  cmd:命令的完整字符串，需要加\r\n。
    * @param	clean 命令结束后是否清除接收缓冲区，1 清除，0 不清除
-   * @template  复位命令：	HC05_Send_CMD("AT+RESET\r\n",1);
+   * @template  复位命令：	BLE_Send_CMD("AT+RESET\r\n",1);
  * @retval 0,设置成功;其他,设置失败.
  */
-uint8_t HC05_Send_CMD(char* cmd,uint8_t clean)
+uint8_t BLE_Send_CMD(char* cmd,uint8_t clean)
 {
     uint8_t retry=5;
     uint8_t i,result=1;
 
+
     while(retry--)
     {
-        BLT_KEY_HIGHT;
+        BLE_WAKEUP_LOW;     //BLE进入准备接收命令的模式
         HAL_Delay(10);
-        BLT_Usart_SendString((uint8_t *)cmd);
+        BLE_Usart_SendString((uint8_t *)cmd);  //USART向BLE发送命令
 
-        for(i=0;i<20;i++)
+        for(i=0;i<20;i++)   //循环迭代20次
         {
             uint16_t len;
             char * redata;
 
-            HAL_Delay(10);
+            HAL_Delay(100);
 
-            redata = get_rebuff(&len);
+            redata = get_rebuff(&len);   //从缓存区获取数据，长度为len
             if(len>0)
             {
-                if(redata[0]!=0)
+                if(redata[0]!=0)   //检查第一个字节是否不等于0，第一个字节为0表示无有效数据
                 {
-                    HC05_DEBUG("send CMD: %s",cmd);
+                    BLE_DEBUG("send CMD: %s",cmd);
 
-                    HC05_DEBUG("receive %s",redata);
+                    BLE_DEBUG("receive %s",redata);
                 }
-                if(strstr(redata,"OK"))
+                if(strstr(redata,"AT+OK\r"))    //搜索接收到的数据是否包含子字符串“OK”，找到OK代表响应
                 {
-
                     if(clean==1)
-                        clean_rebuff();
+                        clean_rebuff();      //清除接收缓存区
                     return 0;
                 }
                 else
                 {
-                    //clean_rebuff();
+//                    clean_rebuff();
                 }
             }
             else
@@ -107,10 +88,10 @@ uint8_t HC05_Send_CMD(char* cmd,uint8_t clean)
                 HAL_Delay(100);
             }
         }
-        HC05_DEBUG("HC05 send CMD fail %d times",retry);
+        BLE_DEBUG("BLE send CMD fail %d times",retry);
     }
 
-    HC05_DEBUG("HC05 send CMD fail ");
+    BLE_DEBUG("BLE send CMD fail ");
 
     if(clean==1)
         clean_rebuff();
@@ -124,38 +105,38 @@ uint8_t HC05_Send_CMD(char* cmd,uint8_t clean)
    * @param  str,要传输的字符串
  * @retval 无
  */
-void HC05_SendString(char* str)
+void BLE_SendString(char* str)
 {
-    BLT_KEY_LOW;
+    BLE_WAKEUP_LOW;
 
-    BLT_Usart_SendString((uint8_t *)str);
+    BLE_Usart_SendString((uint8_t *)str);
 
 }
 
 
 
 /**
- * @brief  初始化GPIO及检测HC05模块
+ * @brief  初始化GPIO及检测BLE模块
  * @param  无
- * @retval HC05状态，0 正常，非0异常
+ * @retval BLE状态，0 正常，非0异常
  */
-uint8_t HC05_Init(void)
+uint8_t BLE_Init(void)
 {
     uint8_t i;
 
-    HC05_GPIO_Config();
+    BLE_GPIO_Config();
 
-    BLT_USART_Config();
+    BLE_USART_Config();
 
-    for(i=0;i<BLTDEV_MAX_NUM;i++)
-    {
-        sprintf(bltDevList.unpraseAddr[i]," ");
-        sprintf(bltDevList.name[i]," ");
-
-    }
-    bltDevList.num = 0;
-
-    return HC05_Send_CMD("AT\r\n",1);
+//    for(i=0;i<BLEDEV_MAX_NUM;i++)
+//    {
+//        sprintf(bleDevList.unpraseAddr[i]," ");
+//        sprintf(bleDevList.name[i]," ");
+//
+//    }
+//    bleDevList.num = 0;
+    return 0;
+//    return BLE_Send_CMD("AT\r\n",1);
 }
 
 
@@ -248,7 +229,7 @@ int get_line(char* line, char* stream ,int max_size)
 
 
 /**
- * @brief  向HC05写入命令，不检查模块的响应
+ * @brief  向BLE写入命令，不检查模块的响应
    * @param  command ，要发送的命令
    * @param  arg，命令参数，为0时不带参数，若command也为0时，发送"AT"命令
  * @retval 无
@@ -257,7 +238,7 @@ void writeCommand(const char *command, const char *arg)
 {
     char str_buf[50];
 
-    BLT_KEY_HIGHT;
+    BLE_WAKEUP_HIGHT;
     HAL_Delay(10);
 
     if (arg && arg[0] != 0)
@@ -269,9 +250,9 @@ void writeCommand(const char *command, const char *arg)
     else
         sprintf(str_buf,"AT\r\n");
 
-    HC05_DEBUG("CMD send:%s",str_buf);
+    BLE_DEBUG("CMD send:%s",str_buf);
 
-    BLT_Usart_SendString((uint8_t *)str_buf);
+    BLE_Usart_SendString((uint8_t *)str_buf);
 
 }
 
@@ -279,10 +260,10 @@ void writeCommand(const char *command, const char *arg)
 
 /**
  * @brief  扫描周边的蓝牙设备，并存储到设备列表中。
-   * @param  bltDev ，蓝牙设备列表指针
+   * @param  bleDev ，蓝牙设备列表指针
  * @retval 是否扫描到设备，0表示扫描到，非0表示没有扫描到
  */
-uint8_t parseBluetoothAddress(BLTDev *bltDev)
+uint8_t parseBluetoothAddress(BLEDev *bleDev)
 {
     /* Address should look like "+ADDR:<NAP>:<UAP>:<LAP>",
      * where actual address will look like "1234:56:abcdef".
@@ -303,13 +284,13 @@ uint8_t parseBluetoothAddress(BLTDev *bltDev)
     char *p;
 
 
-    HC05_Send_CMD("AT+INQ\r\n",0);
+    BLE_Send_CMD("AT+INQ\r\n",0);
 
     redata =get_rebuff(&len);
 
     if(redata[0] != 0 && strstr(redata, "+INQ:") != 0)
     {
-        HC05_DEBUG("rebuf =%s",redata);
+        BLE_DEBUG("rebuf =%s",redata);
 
         getNewLine:
         while(getlen < len-2*linenum )
@@ -317,7 +298,7 @@ uint8_t parseBluetoothAddress(BLTDev *bltDev)
             linelen = get_line(linebuff,redata+getlen+2*linenum,len);
             if(linelen>50 && linelen != 0)
             {
-                HC05_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
+                BLE_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
                 return 1;
             }
 
@@ -328,43 +309,43 @@ uint8_t parseBluetoothAddress(BLTDev *bltDev)
             if(p!=0)
             {
                 uint8_t num ;
-                num = bltDev->num;
+                num = bleDev->num;
 
-                strBLTAddr(bltDev,':');
+                strBLEAddr(bleDev,':');
 
                 for(i=0;i<=num;i++)
                 {
-                    if(strstr(linebuff,bltDev->unpraseAddr[i]) != NULL)
+                    if(strstr(linebuff,bleDev->unpraseAddr[i]) != NULL)
                     {
                         goto getNewLine;	//!=null时，表示该地址与解码语句的地址相同
                     }
                 }
 
                 /*若蓝牙设备不在列表中，对地址进行解码*/
-                bltDev->addr[num].NAP = htoul(p);
+                bleDev->addr[num].NAP = htoul(p);
                 p = strchr(p,':');
 
                 if (p == 0)
                 {
-                    HC05_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
+                    BLE_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
                     return 1;
                 }
 
-                bltDev->addr[num].UAP = htoul(++p);
+                bleDev->addr[num].UAP = htoul(++p);
                 p = strchr(p,':');
 
                 if (p == 0)
                 {
-                    HC05_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
+                    BLE_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
                     return 1;
                 }
 
-                bltDev->addr[num].LAP = htoul(++p);
+                bleDev->addr[num].LAP = htoul(++p);
 
                 /*存储蓝牙地址(字符串形式)*/
-                sprintf(bltDev->unpraseAddr[num],"%X:%X:%X",bltDev->addr[num].NAP,bltDev->addr[num].UAP,bltDev->addr[num].LAP);
+                sprintf(bleDev->unpraseAddr[num],"%X:%X:%X",bleDev->addr[num].NAP,bleDev->addr[num].UAP,bleDev->addr[num].LAP);
 
-                bltDev->num++;
+                bleDev->num++;
 
             }
 
@@ -373,7 +354,7 @@ uint8_t parseBluetoothAddress(BLTDev *bltDev)
 
         clean_rebuff();
 
-        HC05_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
+        BLE_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
         return 0;
     }
 
@@ -381,7 +362,7 @@ uint8_t parseBluetoothAddress(BLTDev *bltDev)
     {
         clean_rebuff();
 
-        HC05_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
+        BLE_Send_CMD("AT+INQC\r\n",1);//退出前中断查询
         return 1;
     }
 
@@ -389,24 +370,24 @@ uint8_t parseBluetoothAddress(BLTDev *bltDev)
 
 /**
  * @brief  把蓝牙地址转化成字符串形式
-   * @param  bltDev ，蓝牙设备列表指针
+   * @param  bleDev ，蓝牙设备列表指针
    *	@param  delimiter, 分隔符。 根据需要使用':'或','。
  * @retval 无
  */
-void strBLTAddr(BLTDev *bltDev,char delimiter)
+void strBLTAddr(BLEDev *bleDev,char delimiter)
 {
     uint8_t i;
 
 
-    if(bltDev->num==0)
+    if(bleDev->num==0)
     {
-        HC05_DEBUG("/*******No other BLT Device********/");
+        BLE_DEBUG("/*******No other BLT Device********/");
     }
     else
     {
-        for(i=0;i<bltDev->num;i++)
+        for(i=0;i<bleDev->num;i++)
         {
-            sprintf(bltDev->unpraseAddr[i],"%X%c%X%c%X",bltDev->addr[i].NAP,delimiter,bltDev->addr[i].UAP,delimiter,bltDev->addr[i].LAP);
+            sprintf(bleDev->unpraseAddr[i],"%X%c%X%c%X",bleDev->addr[i].NAP,delimiter,bleDev->addr[i].UAP,delimiter,bleDev->addr[i].LAP);
         }
     }
 
@@ -415,10 +396,10 @@ void strBLTAddr(BLTDev *bltDev,char delimiter)
 
 /**
  * @brief  获取远程蓝牙设备的名称
-   * @param  bltDev ，蓝牙设备列表指针
+   * @param  bleDev ，蓝牙设备列表指针
  * @retval 0获取成功，非0不成功
  */
-uint8_t getRemoteDeviceName(BLTDev *bltDev)
+uint8_t getRemoteDeviceName(BLEDev *bleDev)
 {
     uint8_t i;
     char *redata;
@@ -430,14 +411,14 @@ uint8_t getRemoteDeviceName(BLTDev *bltDev)
 
     char cmdbuff[100];
 
-    strBLTAddr(bltDev,',');
+    strBLTAddr(bleDev,',');
 
-    HC05_DEBUG("device num =%d",bltDev->num);
+    BLE_DEBUG("device num =%d",bleDev->num);
 
-    for(i=0;i<bltDev->num;i++)
+    for(i=0;i<bleDev->num;i++)
     {
-        sprintf(cmdbuff,"AT+RNAME?%s\r\n",bltDev->unpraseAddr[i]);
-        HC05_Send_CMD(cmdbuff,0);
+        sprintf(cmdbuff,"AT+RNAME?%s\r\n",bleDev->unpraseAddr[i]);
+        BLE_Send_CMD(cmdbuff,0);
 
         redata =get_rebuff(&len);
         if(redata[0] != 0 && strstr(redata, "OK") != 0)
@@ -449,7 +430,7 @@ uint8_t getRemoteDeviceName(BLTDev *bltDev)
             p = skipPrefix(linebuff,linelen,"+RNAME:");
             if(p!=0)
             {
-                strcpy(bltDev->name[i],p);
+                strcpy(bleDev->name[i],p);
             }
 
         }
@@ -472,23 +453,23 @@ uint8_t getRemoteDeviceName(BLTDev *bltDev)
    * @param  bltDev ，蓝牙设备列表指针
  * @retval 无
  */
-void printBLTInfo(BLTDev *bltDev)
+void printBLEInfo(BLEDev *bleDev)
 {
     uint8_t i;
 
-    if(bltDev->num==0)
+    if(bleDev->num==0)
     {
-        HC05_DEBUG("/*******No remote BLT Device or in SLAVE mode********/");
+        BLE_DEBUG("/*******No remote BLT Device or in SLAVE mode********/");
     }
     else
     {
-        HC05_DEBUG("扫描到 %d 个蓝牙设备",bltDev->num);
+        BLE_DEBUG("扫描到 %d 个蓝牙设备",bleDev->num);
 
-        for(i=0;i<bltDev->num;i++)
+        for(i=0;i<bleDev->num;i++)
         {
-            HC05_INFO("/*******Device[%d]********/",i);
-            HC05_INFO("Device Addr: %s",bltDev->unpraseAddr[i]);
-            HC05_INFO("Device name: %s",bltDev->name[i]);
+            BLE_INFO("/*******Device[%d]********/",i);
+            BLE_INFO("Device Addr: %s",bleDev->unpraseAddr[i]);
+            BLE_INFO("Device name: %s",bleDev->name[i]);
         }
     }
 
@@ -497,38 +478,38 @@ void printBLTInfo(BLTDev *bltDev)
 
 
 /**
- * @brief  扫描蓝牙设备，并连接名称中含有"HC05"的设备
+ * @brief  扫描蓝牙设备，并连接名称中含有"BLE"的设备
    * @param  无
  * @retval 0获取成功，非0不成功
  */
-uint8_t linkHC05(void)
+uint8_t linkBLE(void)
 {
     uint8_t i=0;
     char cmdbuff[100];
 
-    parseBluetoothAddress(&bltDevList);
-    getRemoteDeviceName(&bltDevList);
-    printBLTInfo(&bltDevList);
-    HC05_INFO("bltDevList.num = %d", bltDevList.num);
+    parseBluetoothAddress(&bleDevList);
+    getRemoteDeviceName(&bleDevList);
+    printBLEInfo(&bleDevList);
+    BLE_INFO("bleDevList.num = %d", bleDevList.num);
 
 
-    for(i=0;i<=bltDevList.num;i++)
+    for(i=0;i<=bleDevList.num;i++)
     {
-        if(strstr(bltDevList.name[i],"One") != NULL) //非NULL表示找到有名称部分为HC05的设备
+        if(strstr(bleDevList.name[i],"One") != NULL) //非NULL表示找到有名称部分为BLE的设备
         {
-            HC05_INFO("搜索到远程HC05模块，即将进行配对连接...");
-            HC05_INFO("%s", bltDevList.unpraseAddr[i]);
+            BLE_INFO("搜索到远程BLE模块，即将进行配对连接...");
+            BLE_INFO("%s", bleDevList.unpraseAddr[i]);
 
-            strBLTAddr(&bltDevList,',');
+            strBLEAddr(&bleDevList,',');
 
             //配对
-            sprintf(cmdbuff,"AT+PAIR=%s,20\r\n",bltDevList.unpraseAddr[i]);
-            HC05_Send_CMD(cmdbuff,0);
+            sprintf(cmdbuff,"AT+PAIR=%s,20\r\n",bleDevList.unpraseAddr[i]);
+            BLE_Send_CMD(cmdbuff,0);
 
             //连接
-            sprintf(cmdbuff,"AT+LINK=%s\r\n",bltDevList.unpraseAddr[i]);
+            sprintf(cmdbuff,"AT+LINK=%s\r\n",bleDevList.unpraseAddr[i]);
 
-            return HC05_Send_CMD(cmdbuff,0);
+            return BLE_Send_CMD(cmdbuff,0);
         }
 
     }
