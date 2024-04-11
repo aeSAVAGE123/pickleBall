@@ -2,6 +2,7 @@
 #include "bsp_motor_control.h"
 #include <stdbool.h>  // 包含stdbool.h头文件以使用bool类型
 #include "bsp_basic_tim.h"
+#include "bsp_adc.h"
 
 //定义全局变量
 
@@ -84,8 +85,6 @@ void set_pid_target4(_pid *pid, float temp_val)
     HAL_TIM_Base_Start_IT(&TIM_TimeBaseStructure5);
 }
 
-
-
 /**
   * @brief  获取目标值
   * @param  无
@@ -151,36 +150,26 @@ float PID_realize(_pid *pid, float actual_val, _Bool Pflag, _Bool Iflag, _Bool I
 //	pid->actual_val += pid->Kp * (pid->err - pid->err_next) +                             //比例项：（当前误差 - 上一次误差）* Kp
 //                    pid->Ki * pid->err + 										         //积分项：误差的累积 * Ki
 //                    pid->Kd * (pid->err - 2 * pid->err_next + pid->err_last);          //微分项：当前误差、上一次误差和上上次误差的差值，并乘以微分增益
-    /* 添加积分项的上下限控制 */
-//    if (pid->Ki != 0) {
-//        pid->integral += pid->err;  // 更新积分项
-//        /* 设置积分项的上下限 */
-//        if (pid->integral > pid->integral_max)
-//        {
-//            pid->integral = pid->integral_max;
-//        } else if (pid->integral < pid->integral_min)
-//        {
-//            pid->integral = pid->integral_min;
-//        }
 //    }
 
     /*传递误差*/
     pid->err_last = pid->err_next;   //上上一次传递给上一次
     pid->err_next = pid->err;        //上一次传递给当前一次
 
-
     /*返回当前实际值*/
     return pid->actual_val;
-
 }
 
+void PID_reset(void)
+{
+    set_p_i_d(&pid3, 25, 0.18, 0.0);
+    set_p_i_d(&pid4, 25.0,0.19, 0.0);//增量式
 
+    /** 对上、下电机进行归零操作 */
+    pid3.actual_val = positiondown_adc_mean;
+    pid4.actual_val = positionup_adc_mean;
 
-
-
-
-
-
-
-
-
+    set_pid_target3(&pid3, 1618);
+//    set_pid_target4(&pid4, 1290);
+    set_pid_target4(&pid4, 1100);
+}

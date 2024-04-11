@@ -12,8 +12,8 @@
 /* 累计 TIM_Period个后产生一个更新或者中断*/
 //当定时器从0计数到BASIC_PERIOD_COUNT-1，即为BASIC_PERIOD_COUNT次，为一个定时周期
 
-//PID计算周期:20ms计算一次--频率50Hz
-#define BASIC_PERIOD_MS    (10)//20ms
+//PID计算周期:10ms计算一次--频率100Hz
+#define BASIC_PERIOD_MS    (10)//10ms
 
 #define BASIC_PERIOD_COUNT    (BASIC_PERIOD_MS*100)
 
@@ -37,8 +37,8 @@
 #define BASIC_TIM5_IRQn				    TIM5_IRQn
 #define BASIC_TIM5_IRQHandler    	    TIM5_IRQHandler
 
-//PID计算周期:3000ms计算一次--频率0.33Hz
-#define BASIC_PERIOD5_MS        (2000)//3000ms
+//PID计算周期:2000ms计算一次--频率0.2Hz
+#define BASIC_PERIOD5_MS        (2000)//2000ms
 
 #define BASIC_PERIOD5_COUNT     (BASIC_PERIOD5_MS*100)
 

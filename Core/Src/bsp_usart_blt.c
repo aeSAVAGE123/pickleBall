@@ -1,23 +1,3 @@
-//
-// Created by Giselle on 2024/3/17.
-//
-/**
-  ******************************************************************************
-  * @file    bsp_usart1.c
-  * @author  fire
-  * @version V1.0
-  * @date    2013-xx-xx
-  * @brief   HC05串口驱动
-  ******************************************************************************
-  * @attention
-  *
-  * 实验平台:野火 霸道 STM32 开发板
-  * 论坛    :http://www.firebbs.cn
-  * 淘宝    :https://fire-stm32.taobao.com
-  *
-  ******************************************************************************
-  */
-
 #include "bsp_usart_blt.h"
 #include <stdarg.h>
 #include <string.h>
@@ -27,7 +7,6 @@ extern ReceiveData BLE_USART_ReceiveData;
 #define UART_BUFF_SIZE2      1024
 volatile    uint16_t uart_p2 = 0;
 uint8_t     uart_buff2[UART_BUFF_SIZE2];
-
 
 /*
  * 函数名：USARTx_Config
@@ -91,7 +70,6 @@ void BLE_Usart_SendString(uint8_t *str)
 
 }
 
-
 void bsp_USART_Process(void)
 {
     if(uart_p2<UART_BUFF_SIZE2)
@@ -109,8 +87,6 @@ void bsp_USART_Process(void)
     HAL_UART_IRQHandler(&UART_InitStructure);
 }
 
-
-
 //获取接收到的数据和长度
 char *get_rebuff(uint16_t *len)
 {
@@ -121,12 +97,10 @@ char *get_rebuff(uint16_t *len)
 //清空缓冲区
 void clean_rebuff(void)
 {
-
     uint16_t i=UART_BUFF_SIZE2+1;
     uart_p2 = 0;
     while(i)
         uart_buff2[--i]=0;
-
 }
 
 

@@ -5,7 +5,6 @@
 
 //蓝牙设备列表，在main文件中定义
 extern  BLEDev bleDevList;
-
 /**
  * @brief  初始化控制GPIO引脚定义
  * @param  无
@@ -49,55 +48,50 @@ uint8_t BLE_Send_CMD(char* cmd,uint8_t clean)
     uint8_t retry=5;
     uint8_t i,result=1;
 
-
     while(retry--)
     {
         BLE_WAKEUP_LOW;     //BLE进入准备接收命令的模式
         HAL_Delay(10);
         BLE_Usart_SendString((uint8_t *)cmd);  //USART向BLE发送命令
 
-        for(i=0;i<20;i++)   //循环迭代20次
-        {
-            uint16_t len;
-            char * redata;
-
-            HAL_Delay(100);
-
-            redata = get_rebuff(&len);   //从缓存区获取数据，长度为len
-            if(len>0)
-            {
-                if(redata[0]!=0)   //检查第一个字节是否不等于0，第一个字节为0表示无有效数据
-                {
-                    BLE_DEBUG("send CMD: %s",cmd);
-
-                    BLE_DEBUG("receive %s",redata);
-                }
-                if(strstr(redata,"AT+OK\r"))    //搜索接收到的数据是否包含子字符串“OK”，找到OK代表响应
-                {
-                    if(clean==1)
-                        clean_rebuff();      //清除接收缓存区
-                    return 0;
-                }
-                else
-                {
-//                    clean_rebuff();
-                }
-            }
-            else
-            {
-                HAL_Delay(100);
-            }
-        }
-        BLE_DEBUG("BLE send CMD fail %d times",retry);
+//        for(i=0;i<20;i++)   //循环迭代20次
+//        {
+//            uint16_t len;
+//            char * redata;
+//
+//            HAL_Delay(100);
+//
+//            redata = get_rebuff(&len);   //从缓存区获取数据，长度为len
+//            if(len>0)
+//            {
+//                if(redata[0]!=0)   //检查第一个字节是否不等于0，第一个字节为0表示无有效数据
+//                {
+//                    BLE_DEBUG("send CMD: %s",cmd);
+//
+//                    BLE_DEBUG("receive %s",redata);
+//                }
+//                if(strstr(redata,"AT+OK\r"))    //搜索接收到的数据是否包含子字符串“OK”，找到OK代表响应
+//                {
+//                    if(clean==1)
+//                        clean_rebuff();      //清除接收缓存区
+//                    return 0;
+//                }
+//                else
+//                {
+//
+//                }
+//            }
+//            else
+//            {
+//                HAL_Delay(100);
+//            }
+//        }
+//        BLE_DEBUG("BLE send CMD fail %d times",retry);
     }
-
-    BLE_DEBUG("BLE send CMD fail ");
-
+//    BLE_DEBUG("BLE send CMD fail ");
     if(clean==1)
         clean_rebuff();
-
-    return result ;
-
+    return 0 ;
 }
 
 /**
@@ -123,25 +117,11 @@ void BLE_SendString(char* str)
 uint8_t BLE_Init(void)
 {
     uint8_t i;
-
     BLE_GPIO_Config();
-
     BLE_USART_Config();
 
-//    for(i=0;i<BLEDEV_MAX_NUM;i++)
-//    {
-//        sprintf(bleDevList.unpraseAddr[i]," ");
-//        sprintf(bleDevList.name[i]," ");
-//
-//    }
-//    bleDevList.num = 0;
     return 0;
-//    return BLE_Send_CMD("AT\r\n",1);
 }
-
-
-
-
 
 /**
  * @brief  把接收到的字符串转化成16进制形式的数字变量(主要用于转化蓝牙地址)

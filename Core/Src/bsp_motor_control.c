@@ -8,6 +8,10 @@
 #include "bsp_tim.h"
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
+#include "bsp_usart_blt.h"
+#include "bsp_hc05.h"
+#include "bsp_SysTick.h"
 
 motor_dir_t MOTOR1_direction  = MOTOR_REV;       // 记录方向
 motor_dir_t MOTOR2_direction  = MOTOR_FWD;       // 记录方向
@@ -26,6 +30,8 @@ uint8_t     is_motor2_en = 0;            			// 电机2使能
 uint8_t     is_motor3_en = 0;            			// 电机3使能
 uint8_t     is_motor4_en = 0;            			// 电机4使能
 uint8_t     is_motor5_en = 0;            			// 电机5使能
+
+
 
 void wakeup_motor(void)
 {
@@ -392,14 +398,14 @@ void set_motor5_disable(void)
   */
 void motor3_pid_control(void)
 {
-    if (is_motor3_en == 1)    			 																										 										// 电机在使能状态下才进行控制处理
+    if (is_motor3_en == 1)    			 												// 电机在使能状态下才进行控制处理
     {
         float cont_val = 0;    //存储PID计算的控制值
-        int temp_val = 0;          //存储处理后的控制值   																										 										// 当前控制值
+        int temp_val = 0;          //存储处理后的控制值   								// 当前控制值
 
-        cont_val = PID_realize(&pid3, positiondown_adc_mean, Pflag3, Iflag3, Iflagz3);    																 	 						// 将Pid3的值传递给函数进行 PID 计算
+        cont_val = PID_realize(&pid3, positiondown_adc_mean, Pflag3, Iflag3, Iflagz3);    // 将Pid3的值传递给函数进行 PID 计算
 
-        if (cont_val > 0)   	 																														 										// 判断电机方向
+        if (cont_val > 0)   	 						// 判断电机方向
         {
             set_motor3_direction(MOTOR_FWD);
         }
@@ -407,7 +413,7 @@ void motor3_pid_control(void)
         {
             set_motor3_direction(MOTOR_REV);
         }
-        temp_val = (fabs(cont_val) > PWM_MAX_PERIOD_COUNT*0.9) ? PWM_MAX_PERIOD_COUNT*0.9 : fabs(cont_val);    // 速度上限处理    判断绝对值是否大于5500的80%，大于则是5500的80%，小于则是绝对值
+        temp_val = (fabs(cont_val) > PWM_MAX_PERIOD_COUNT*0.9) ? PWM_MAX_PERIOD_COUNT*0.9 : fabs(cont_val);    // 速度上限处理
         set_motor3_speed(temp_val);                                                                     			 // 设置 PWM 占空比
     }
 }
@@ -419,10 +425,10 @@ void motor3_pid_control(void)
   */
 void motor4_pid_control(void)
 {
-    if (is_motor4_en == 1)    			 																										 										// 电机在使能状态下才进行控制处理
+    if (is_motor4_en == 1)    			 	// 电机在使能状态下才进行控制处理
     {
         float cont_val = 0;
-        int temp_val = 0;             																										 										// 当前控制值
+        int temp_val = 0;           // 当前控制值
         if(positionup_adc_mean < 659)
         {
             positionup_adc_mean = 659;
@@ -431,13 +437,9 @@ void motor4_pid_control(void)
         {
             positionup_adc_mean = 2124;
         }
-        cont_val = PID_realize(&pid4, positionup_adc_mean, Pflag4, Iflag4, Iflagz4);    																 	 							// 进行 PID 计算
+        cont_val = PID_realize(&pid4, positionup_adc_mean, Pflag4, Iflag4, Iflagz4);    	// 进行 PID 计算
 
-        int32_t err = pid4.err;
-        int32_t err_last = pid4.err_last;
-        int32_t err_next = pid4.err_next;
-
-        if (cont_val > 0)   	 																														 										// 判断电机方向
+        if (cont_val > 0)   	 																					// 判断电机方向
         {
             set_motor4_direction(MOTOR_REV);
         }
@@ -450,5 +452,445 @@ void motor4_pid_control(void)
     }
 }
 
+void BLE_motor_control(void) {
 
+}
+
+void upward_control(void)
+{
+    LED5_TOGGLE
+    uint16_t temp_val = get_pid_target(&pid4); // 获取当前PID目标值
+    if (temp_val >= 700) {
+        temp_val -= 20; // 每次减少150
+        if (temp_val < 700) {
+            temp_val = 700; // 如果减少后的值小于700，则将其设置为700
+        }
+        set_pid_target4(&pid4, temp_val); // 设置新的PID目标值
+    }
+}
+
+void downward_control(void)
+{
+        LED2_TOGGLE
+        uint16_t temp_val = get_pid_target(&pid4); // 获取当前PID目标值
+        if (temp_val <= 2100)
+        {
+            temp_val += 20; // 每次增加150
+            if (temp_val > 2100)
+            {
+                temp_val = 2100; // 如果增加后的值大于2100，则将其设置为2100
+            }
+            set_pid_target4(&pid4, temp_val); // 设置新的PID目标值
+        }
+}
+
+void left_control(void)
+{
+        LED3_TOGGLE
+        uint16_t temp_val = get_pid_target(&pid3); // 获取当前PID目标值
+        if(temp_val >= 700)
+        {
+            temp_val -= 20; // 每次减少150
+            if(temp_val < 700)
+            {
+                temp_val = 700; // 如果减少后的值小于700，则将其设置为700
+            }
+            set_pid_target3(&pid3, temp_val); // 设置新的PID目标值
+        }
+}
+
+void right_control(void)
+{
+        LED4_TOGGLE
+        uint16_t temp_val = get_pid_target(&pid3); // 获取当前PID目标值
+        if(temp_val <= 2200)
+        {
+            temp_val += 20; // 每次增加100
+            if(temp_val > 2200) {
+                temp_val = 2200; // 如果增加后的值大于2100，则将其设置为2100
+            }
+            set_pid_target3(&pid3, temp_val); // 设置新的PID目标值
+        }
+}
+
+void motor1_motor2_control(void)
+{
+        LED5_TOGGLE
+        if(!is_motor1_en && !is_motor2_en)
+        {
+            set_motor1_enable();
+            set_motor1_direction(MOTOR_FWD);
+            set_motor1_speed(1800);
+
+            set_motor2_enable();
+            set_motor2_direction(MOTOR_REV);
+            set_motor2_speed(1800);
+        }
+        else
+        {
+            set_motor1_disable();
+            set_motor2_disable();
+        }
+}
+
+void motor1_motor2_speedup(void)
+{
+    __IO uint16_t motor1_ChannelPulse = 2000; // 9000
+    __IO uint16_t motor2_ChannelPulse = 2000;
+
+        LED5_TOGGLE
+        motor1_ChannelPulse += 100;
+        motor2_ChannelPulse += 100;
+        if((motor1_ChannelPulse > PWM_MAX_PERIOD_COUNT)||(motor2_ChannelPulse > PWM_MAX_PERIOD_COUNT))
+        {
+            motor1_ChannelPulse = PWM_MAX_PERIOD_COUNT;
+            motor2_ChannelPulse = PWM_MAX_PERIOD_COUNT;
+        }
+        set_motor1_speed(motor1_ChannelPulse);
+        set_motor2_speed(motor2_ChannelPulse);
+}
+
+void motor1_motor2_slowdown(void)
+{
+    __IO uint16_t motor1_ChannelPulse = 2000; // 9000
+    __IO uint16_t motor2_ChannelPulse = 2000;
+        LED5_TOGGLE
+        motor1_ChannelPulse -= 100;
+        motor2_ChannelPulse -= 100;
+        if((motor1_ChannelPulse < PWM_MAX_PERIOD_COUNT/10)||(motor2_ChannelPulse < PWM_MAX_PERIOD_COUNT/10))
+        {
+            motor1_ChannelPulse = 0;
+            motor2_ChannelPulse = 0;
+        }
+
+        set_motor1_speed(motor1_ChannelPulse);
+        set_motor2_speed(motor2_ChannelPulse);
+    }
+
+void motor_reset(void)
+{
+        LED5_TOGGLE
+        __set_FAULTMASK(1);
+        NVIC_SystemReset();
+}
+
+void motor5_control(void)
+{
+        LED5_TOGGLE
+        if(!is_motor5_en)
+        {
+            set_motor5_enable();
+            set_motor5_direction(MOTOR_FWD);
+            set_motor5_speed(3000);
+        }
+        else
+        {
+            set_motor5_disable();
+        }
+}
+
+void A1_control(void)
+{
+    set_motor1_enable();                            //A1
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(1900);
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(1900);
+
+    set_pid_target3(&pid3, 2500);
+}
+
+void A2_control(void)
+{
+    set_motor1_enable();                            //A2
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2100);
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2100);
+
+    set_pid_target3(&pid3, 1900);
+}
+
+void A3_control(void)
+{
+    set_motor1_enable();                            //A3
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(1800);
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(1800);
+
+    set_pid_target3(&pid3, 1738);
+}
+
+void A4_control(void)
+{
+    set_motor1_enable();                            //A4
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(1800);
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(1800);
+
+    set_pid_target3(&pid3, 1290);
+}
+
+void A5_control(void)
+{
+    set_motor1_enable();                            //A5
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(1800);
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(1800);
+
+    set_pid_target3(&pid3, 745);
+}
+
+void B1_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2100);                         //B1
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2100);
+
+    set_pid_target3(&pid3, 2250);
+
+}
+
+void B2_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2100);                         //B2
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2100);
+
+    set_pid_target3(&pid3, 1900);
+}
+
+void B3_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2100);                         //B3
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2100);
+
+    set_pid_target3(&pid3, 1591);
+}
+
+void B4_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+        set_motor1_speed(2200);                         //B4
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2200);
+
+    set_pid_target3(&pid3, 745);
+
+}
+
+void B5_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2100);                         //B5
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2100);
+
+    set_pid_target3(&pid3, 745);
+
+}
+
+void C1_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //C1
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 2000);
+}
+
+void C2_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //C2
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1750);
+}
+
+void C3_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //C3
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+    HAL_Delay(1500);
+
+    set_pid_target3(&pid3, 1580);
+}
+
+void C4_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //C4
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1200);
+}
+
+void C5_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //C5
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+
+    set_pid_target3(&pid3, 1100);
+}
+
+void D1_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //D1
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 2000);
+}
+
+void D2_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //D2
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1780);
+}
+
+void D3_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //D3
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1530);
+}
+
+void D4_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //D4
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1300);
+}
+
+void D5_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //D5
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1100);
+}
+
+void E1_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //E1
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1920);
+}
+
+void E2_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //E2
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1720);
+}
+
+void E3_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //E3
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1560);
+}
+
+void E4_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //E4
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 1230);
+}
+
+void E5_control(void)
+{
+    set_motor1_enable();
+    set_motor1_direction(MOTOR_FWD);
+    set_motor1_speed(2400);                         //E5
+    set_motor2_enable();
+    set_motor2_direction(MOTOR_REV);
+    set_motor2_speed(2400);
+
+    set_pid_target3(&pid3, 800);
+}
 

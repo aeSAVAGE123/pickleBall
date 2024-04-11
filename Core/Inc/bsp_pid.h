@@ -46,6 +46,7 @@ extern void set_pid_target4(_pid *pid, float temp_val);
 extern float get_pid_target(_pid *pid);
 extern void set_p_i_d(_pid *pid, float p, float i, float d);
 extern float PID_realize(_pid *pid, float actual_val, _Bool Pflag, _Bool Iflag, _Bool Iflagz);
-extern void updateFlagsForPID(_pid *pid, _Bool Pflag, _Bool Iflag, _Bool Iflagz, float threshold1, float threshold2);
+extern void PID_reset(void);
+
 
 #endif
