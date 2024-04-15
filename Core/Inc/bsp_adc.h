@@ -8,7 +8,7 @@
 
 #define POSITION_ADC					    ADC1
 #define POSITION_ADC_CLK_ENABLE()           __HAL_RCC_ADC1_CLK_ENABLE();
-#define ADC_NUM_MAX                         2048       // ADC 转换结果缓冲区最大值
+#define ADC_NUM_MAX                         2046       // ADC 转换结果缓冲区最大值
 
 #define ADC_POSITION_IRQ					ADC_IRQn
 #define ADC_POSITION_IRQHandler				ADC_IRQHandler
@@ -26,6 +26,11 @@
 #define POSITONDOWN_ADC_GPIO_PIN            GPIO_PIN_1
 #define POSITONDOWN_ADC_GPIO_CLK_ENABLE()   __HAL_RCC_GPIOB_CLK_ENABLE()
 #define POSITONDOWN_ADC_CHANNEL             ADC_CHANNEL_9
+
+#define Rotation1_ADC_GPIO_PORT           GPIOA
+#define Rotation1_ADC_GPIO_PIN            GPIO_PIN_5
+#define Rotation1_ADC_GPIO_CLK_ENABLE()   __HAL_RCC_GPIOA_CLK_ENABLE()
+#define Rotation1_ADC_CHANNEL             ADC_CHANNEL_5
 
 /** ADC DR寄存器宏定义，ADC转换后的数字值则存放在这里 */
 #define POSITION_ADC_DR_ADDR                ((uint32_t)ADC1+0x4c)
@@ -45,5 +50,6 @@ float get_positionup_val(void);
 float get_positiondown_val(void);
 extern int32_t positionup_adc_mean;   			    // 位置上电压 ACD 采样结果平均值
 extern int32_t positiondown_adc_mean; 				// 位置下电压 ACD 采样结果平均值
+extern int32_t Rotation1_adc_mean;
 
 #endif
