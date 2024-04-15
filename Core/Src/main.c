@@ -19,6 +19,11 @@ static void MX_NVIC_Init(void);
 unsigned int Task_Delay[NumOfTask];
 
 _Bool firststart;
+_Bool speedflag = 0;
+_Bool Pid3flag = 0;
+_Bool Pid4flag = 0;
+int current = 0;
+int upcurrent = 0;
 
 /**
   * @brief  The application entry point.
@@ -44,16 +49,11 @@ int main(void)
     /** 对PID参数进行初始化 */
     PID_param_init();
     USART_Config();
-//    DEBUG_USART_Config();
     MX_NVIC_Init();
 
 
     set_p_i_d(&pid3, 25, 0.18, 0.0);
     set_p_i_d(&pid4, 25.0,0.19, 0.0);//增量式
-
-    float pid_temp3[3] = {pid3.Kp, pid3.Ki, pid3.Kd};
-	float pid_temp4[3] = {pid4.Kp, pid4.Ki, pid4.Kd};
-    float target = 100;
 
 
     /** 对上、下电机进行归零操作 */
@@ -66,9 +66,149 @@ int main(void)
     set_motor3_enable();
     set_motor4_enable();
 
+    _Bool cnt1 = 1;
+    _Bool cnt2 = 1;
+    _Bool cnt3 = 1;
+    _Bool cnt4 = 1;
+    _Bool cnt5 = 1;
+
+    _Bool upcnt1 = 1;
+    _Bool upcnt2 = 1;
+    _Bool upcnt3 = 1;
+    _Bool upcnt4 = 1;
+    _Bool upcnt5 = 1;
+
     while (1)
     {
-
+        Key_control();
+        if(speedflag == 1)
+        {
+            int32_t tempspeed = Rotation1_adc_mean;
+            if(tempspeed > 3000)
+            {
+                tempspeed = 3000;
+            }
+            set_motor1_speed(tempspeed);
+            set_motor2_speed(tempspeed);
+        }
+        if(Pid3flag == 1)
+        {
+            current = Rotation2_adc_mean;
+            if(current > 0 && current < 819)
+            {
+                if(cnt1 == 1)
+                {
+                    set_pid_target3(&pid3,780);
+                    cnt1 = 0;
+                }
+            } else
+            {
+                cnt1 = 1;
+            }
+            if(current >= 819 && current < 1638)
+            {
+                if(cnt2 == 1)
+                {
+                    set_pid_target3(&pid3,1250);
+                    cnt2 = 0;
+                }
+            } else
+            {
+                cnt2 = 1;
+            }
+            if(current >= 1638 && current < 2457)
+            {
+                if(cnt3 == 1)
+                {
+                    set_pid_target3(&pid3,1600);
+                    cnt3 = 0;
+                }
+            } else
+            {
+                cnt3 = 1;
+            }
+            if(current >= 2457 && current < 3276)
+            {
+                if(cnt4 == 1)
+                {
+                    set_pid_target3(&pid3,1800);
+                    cnt4 = 0;
+                }
+            } else
+            {
+                cnt4 = 1;
+            }
+            if(current >= 3276 && current < 4095)
+            {
+                if(cnt5 == 1)
+                {
+                    set_pid_target3(&pid3,2400);
+                    cnt5 = 0;
+                }
+            } else
+            {
+                cnt5 = 1;
+            }
+        }
+        if(Pid4flag == 1)
+        {
+            upcurrent = Rotation3_adc_mean;
+            if(upcurrent > 0 && upcurrent < 819)
+            {
+                if(upcnt1 == 1)
+                {
+                    set_pid_target4(&pid3,900);
+                    upcnt1 = 0;
+                }
+            } else
+            {
+                upcnt1 = 1;
+            }
+            if(upcurrent >= 819 && upcurrent < 1638)
+            {
+                if(upcnt2 == 1)
+                {
+                    set_pid_target4(&pid3,1100);
+                    upcnt2 = 0;
+                }
+            } else
+            {
+                upcnt2 = 1;
+            }
+            if(upcurrent >= 1638 && upcurrent < 2457)
+            {
+                if(upcnt3 == 1)
+                {
+                    set_pid_target4(&pid3,1300);
+                    upcnt3 = 0;
+                }
+            } else
+            {
+                upcnt3 = 1;
+            }
+            if(upcurrent >= 2457 && upcurrent < 3276)
+            {
+                if(upcnt4 == 1)
+                {
+                    set_pid_target4(&pid3,1500);
+                    upcnt4 = 0;
+                }
+            } else
+            {
+                upcnt4 = 1;
+            }
+            if(upcurrent >= 3276 && upcurrent < 4095)
+            {
+                if(upcnt5 == 1)
+                {
+                    set_pid_target4(&pid3,1700);
+                    upcnt5 = 0;
+                }
+            } else
+            {
+                upcnt5 = 1;
+            }
+        }
     }
 
 }

@@ -1,21 +1,8 @@
-/**
-  ******************************************************************************
-  * @file    bsp_key.c
-  * @author  fire
-  * @version V1.0
-  * @date    2015-xx-xx
-  * @brief   按键应用bsp（扫描模式）
-  ******************************************************************************
-  * @attention
-  *
-  * 实验平台:野火  STM32 F103 开发板
-  * 论坛    :http://www.firebbs.cn
-  * 淘宝    :http://firestm32.taobao.com
-  *
-  ******************************************************************************
-  */
 
 #include "bsp_key.h"
+#include "bsp_pid.h"
+#include "bsp_led.h"
+#include "bsp_usart.h"
 /**
   * @brief  配置按键用到的I/O口
   * @param  无
@@ -61,7 +48,6 @@ void Key_GPIO_Config(void)
     GPIO_InitStructure.Pin = KEY5_PIN;
     /*使用上面的结构体初始化按键*/
     HAL_GPIO_Init(KEY5_GPIO_PORT, &GPIO_InitStructure);
-
 }
 
 /**
@@ -86,6 +72,91 @@ uint8_t Key_Scan(GPIO_TypeDef* GPIOx,uint16_t GPIO_Pin)
     }
     else
         return KEY_OFF;
+}
+
+void Key_control(void)
+{
+    /* 扫描KEY1 */
+    if( Key_Scan(KEY1_GPIO_PORT, KEY1_PIN) == KEY_ON)
+    {
+        LED5_TOGGLE
+        if(speedflag == 1)
+        {
+            speedflag = 0;
+            set_motor1_disable();
+            set_motor2_disable();
+        }
+        else
+        {
+            speedflag = 1;
+            set_motor1_enable();                            //A2
+            set_motor1_direction(MOTOR_FWD);
+            set_motor1_speed(0);
+            set_motor2_enable();                            //A2
+            set_motor2_direction(MOTOR_REV);
+            set_motor2_speed(0);
+        }
+
+    }
+
+    /* 扫描KEY2 */
+    if( Key_Scan(KEY2_GPIO_PORT, KEY2_PIN) == KEY_ON)
+    {
+        LED2_TOGGLE
+        if(Pid3flag == 1)
+        {
+            Pid3flag = 0;
+        }
+        else
+        {
+            Pid3flag = 1;
+        }
+    }
+
+    /* 扫描KEY3 */
+    if( Key_Scan(KEY3_GPIO_PORT, KEY3_PIN) == KEY_ON)
+    {
+        if(Pid4flag == 1)
+        {
+            Pid4flag = 0;
+        }
+        else
+        {
+            Pid4flag = 1;
+        }
+        LED3_TOGGLE
+    }
+
+    /* 扫描KEY4 */
+    if( Key_Scan(KEY4_GPIO_PORT, KEY4_PIN) == KEY_ON)
+    {
+        uint16_t temp_val = get_pid_target(&pid3); // 获取当前PID目标值
+        if(temp_val <= 2200)
+        {
+            temp_val += 50; // 每次增加50
+            if(temp_val > 2200) {
+                temp_val = 2200; // 如果增加后的值大于2100，则将其设置为2100
+            }
+            set_pid_target3(&pid3, temp_val); // 设置新的PID目标值
+        }
+        LED4_TOGGLE
+    }
+
+    /* 扫描KEY5 */
+    if( Key_Scan(KEY5_GPIO_PORT, KEY5_PIN) == KEY_ON)
+    {
+        if(!is_motor5_en)
+        {
+            set_motor5_enable();
+            set_motor5_direction(MOTOR_FWD);
+            set_motor5_speed(3000);
+        }
+        else
+        {
+            set_motor5_disable();
+        }
+        LED5_TOGGLE
+    }
 }
 /*********************************************END OF FILE**********************/
 

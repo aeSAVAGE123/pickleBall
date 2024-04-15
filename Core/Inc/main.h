@@ -33,7 +33,10 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
-extern _Bool firststart;;
+extern _Bool firststart;
+extern _Bool speedflag;
+extern _Bool Pid3flag;
+extern _Bool Pid4flag;
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
