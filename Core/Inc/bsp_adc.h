@@ -8,7 +8,7 @@
 
 #define POSITION_ADC					    ADC1
 #define POSITION_ADC_CLK_ENABLE()           __HAL_RCC_ADC1_CLK_ENABLE();
-#define ADC_NUM_MAX                         2045       // ADC 转换结果缓冲区最大值
+#define ADC_NUM_MAX                         2046       // ADC 转换结果缓冲区最大值
 
 #define ADC_POSITION_IRQ					ADC_IRQn
 #define ADC_POSITION_IRQHandler				ADC_IRQHandler
@@ -26,6 +26,11 @@
 #define POSITONDOWN_ADC_GPIO_PIN            GPIO_PIN_1
 #define POSITONDOWN_ADC_GPIO_CLK_ENABLE()   __HAL_RCC_GPIOB_CLK_ENABLE()
 #define POSITONDOWN_ADC_CHANNEL             ADC_CHANNEL_9
+
+#define Dropping_ADC_GPIO_PORT           GPIOA
+#define Dropping_ADC_GPIO_PIN            GPIO_PIN_4
+#define Dropping_ADC_GPIO_CLK_ENABLE()   __HAL_RCC_GPIOA_CLK_ENABLE()
+#define Dropping_ADC_CHANNEL             ADC_CHANNEL_4
 
 #define Rotation1_ADC_GPIO_PORT           GPIOA
 #define Rotation1_ADC_GPIO_PIN            GPIO_PIN_5
@@ -55,7 +60,7 @@
 
 extern ADC_HandleTypeDef hadc1;
 extern DMA_HandleTypeDef DMA_Init_Handle;
-void ADC1_Init(void);
+void ADC_Init(void);
 float get_positionup_val(void);
 float get_positiondown_val(void);
 extern int32_t positionup_adc_mean;   			    // 位置上电压 ACD 采样结果平均值
@@ -63,5 +68,6 @@ extern int32_t positiondown_adc_mean; 				// 位置下电压 ACD 采样结果平
 extern int32_t Rotation1_adc_mean;
 extern int32_t Rotation2_adc_mean;
 extern int32_t Rotation3_adc_mean;
+extern int32_t Dropping_adc_mean;
 
 #endif

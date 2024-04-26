@@ -250,6 +250,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 //        set_computer_Speed_Location_value(Send_Speed_CMD, Rotation1_adc_mean);
 //        set_computer_Speed_Location_value(Send_Speed_CMD, Rotation2_adc_mean);
         set_computer_Speed_Location_value(Send_Speed_CMD, Rotation3_adc_mean);
+//        set_computer_Speed_Location_value(Send_Speed_CMD, Dropping_adc_mean);
         if (pid3_enable)
         {
             if (fabs(pid3.err) > 200)
@@ -350,67 +351,6 @@ void BLT_UARTx_IRQHandler(void)
     bsp_USART_Process();
 }
 
-
-//void DEBUG_USART_IRQHandler(void)
-//{
-//    uint8_t dr = __HAL_UART_FLUSH_DRREGISTER(&UartHandle2);
-// //   protocol_data_recv(&dr, 1);
-//
-//    HAL_UART_IRQHandler(&UartHandle2);
-//
-//    __IO uint8_t data;
-//
-//    if(__HAL_UART_GET_IT_SOURCE(&UartHandle2, UART_IT_RXNE) != RESET)
-//    {
-//        data = UartHandle2.Instance->DR;
-//
-//        //如果为退格键
-//        if(data == '\b')
-//        {
-//            //如果指针不在数组的开始位置
-//            if(UART_RxPtr)
-//            {
-//                Usart_SendByte('\b');
-//                Usart_SendByte(' ');
-//                Usart_SendByte('\b');
-//                UART_RxPtr--;
-//                UART_RxBuffer[UART_RxPtr]=0x00;
-//            }
-//        }
-//            //如果不是退格键
-//        else
-//        {
-//            //将数据填入数组UART_RxBuffer
-//            //并且将后面的一个元素清零如果数组满了则写入最后一个元素为止
-//            if(UART_RxPtr < (UART_RX_BUFFER_SIZE - 1))
-//            {
-//                UART_RxBuffer[UART_RxPtr] = data;
-//                UART_RxBuffer[UART_RxPtr + 1]=0x00;
-//                UART_RxPtr++;
-//            }
-//            else
-//            {
-//                UART_RxBuffer[UART_RxPtr - 1] = data;
-//                Usart_SendByte('\b');
-//            }
-//            //如果为回车键，则开始处理串口数据
-//            if(data == 13 || data == 10)
-//            {
-//                receive_cmd = 1;
-//            }
-//            else
-//            {
-//                Usart_SendByte(data);
-//            }
-//        }
-//
-//        __HAL_UART_CLEAR_FLAG(&UartHandle2, UART_IT_RXNE);
-//    }
-//
-////  HAL_UART_Receive_IT(&UartHandle, &data, sizeof(data));
-//
-//    HAL_UART_IRQHandler(&UartHandle2);
-//}
 
 void BLE_UARTx_IRQHandler(void)
 {

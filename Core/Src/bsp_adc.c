@@ -10,6 +10,8 @@ int32_t positiondown_adc_mean = 0; 					    /** 位置下电压 ACD 采样结果
 int32_t Rotation1_adc_mean = 0;
 int32_t Rotation2_adc_mean = 0;
 int32_t Rotation3_adc_mean = 0;
+int32_t Dropping_adc_mean = 0;
+
 /**
   * @brief  ADC 通道引脚初始化
   * @param  无
@@ -31,6 +33,9 @@ static void ADC_GPIO_Config(void)
     GPIO_InitStructure.Pin = POSITONDOWN_ADC_GPIO_PIN;
     HAL_GPIO_Init(POSITONDOWN_ADC_GPIO_PORT, &GPIO_InitStructure);
 
+    GPIO_InitStructure.Pin = Dropping_ADC_GPIO_PIN;
+    HAL_GPIO_Init(Dropping_ADC_GPIO_PORT, &GPIO_InitStructure);
+
     GPIO_InitStructure.Pin = Rotation1_ADC_GPIO_PIN;
     GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStructure.Pull = GPIO_NOPULL ;             /** 不上拉不下拉 */
@@ -40,7 +45,7 @@ static void ADC_GPIO_Config(void)
     HAL_GPIO_Init(Rotation2_ADC_GPIO_PORT, &GPIO_InitStructure);
 
     GPIO_InitStructure.Pin = Rotation3_ADC_GPIO_PIN;
-    HAL_GPIO_Init(Rotation2_ADC_GPIO_PORT, &GPIO_InitStructure);
+    HAL_GPIO_Init(Rotation3_ADC_GPIO_PORT, &GPIO_InitStructure);
 }
 
 void ADC_DNA_INIT(void)
@@ -93,8 +98,8 @@ static void ADC_Mode_Config(void)
     hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
     //数据右对齐
     hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-    //转换通道 2个
-    hadc1.Init.NbrOfConversion = 5;
+    //转换通道 6个
+    hadc1.Init.NbrOfConversion = 6;
     // 初始化ADC
     HAL_ADC_Init(&hadc1);
 
@@ -104,7 +109,6 @@ static void ADC_Mode_Config(void)
     ADC_Config.Rank         = 1;
     // 采样时间间隔
     ADC_Config.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-    // 配置 ADC 通道转换顺序为1，第一个转换，采样时间为3个时钟周期
     HAL_ADC_ConfigChannel(&hadc1, &ADC_Config);
 
     ADC_Config.Channel 			= POSITONDOWN_ADC_CHANNEL;
@@ -131,11 +135,17 @@ static void ADC_Mode_Config(void)
     ADC_Config.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
     HAL_ADC_ConfigChannel(&hadc1, &ADC_Config);
 
+    ADC_Config.Channel 			= Dropping_ADC_CHANNEL;
+    ADC_Config.Rank 			= 6;
+    // 采样时间间隔
+    ADC_Config.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
+    HAL_ADC_ConfigChannel(&hadc1, &ADC_Config);
+
     HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc_buff, ADC_NUM_MAX);
 }
 
 
-void ADC1_Init(void)
+void ADC_Init(void)
 {
     ADC_GPIO_Config();
     ADC_DNA_INIT();
@@ -151,61 +161,46 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     uint32_t adc_sum = 0;        //用于储存ADC的平均值
     HAL_ADC_Stop_DMA(hadc);       // 停止 ADC 采样，处理完一次数据在继续采样
-    for(uint32_t count = 0; count < ADC_NUM_MAX; count += 5)            //开始一个循环，从0开始，每次增加2，直到 ADC_NUM_MAX。这个循环用于计算ADC转换结果的平均值。
+    for(uint32_t count = 0; count < ADC_NUM_MAX; count += 6)            //开始一个循环，从0开始，每次增加2，直到 ADC_NUM_MAX。这个循环用于计算ADC转换结果的平均值。
     {
         adc_sum += (uint32_t)adc_buff[count];                          //在每次迭代中，将 adc_buff 数组中的元素累加到 adc_mean 变量中。
     }
-    positionup_adc_mean = adc_sum / (ADC_NUM_MAX / 5);                 //计算ADC转换结果的平均值。这个平均值被存储到 positionup_adc_mean 变量中。
+    positionup_adc_mean = adc_sum / (ADC_NUM_MAX / 6);                 //计算ADC转换结果的平均值。这个平均值被存储到 positionup_adc_mean 变量中。
 
     adc_sum = 0;
-    for(uint32_t count = 1; count < ADC_NUM_MAX; count += 5)
+    for(uint32_t count = 1; count < ADC_NUM_MAX; count += 6)
     {
         adc_sum += (uint32_t)adc_buff[count];
     }
-    positiondown_adc_mean = adc_sum / (ADC_NUM_MAX / 5);    // 计算ADC转换结果的平均值。这个平均值被存储到 positiondown_adc_mean 变量中。
+    positiondown_adc_mean = adc_sum / (ADC_NUM_MAX / 6);    // 计算ADC转换结果的平均值。这个平均值被存储到 positiondown_adc_mean 变量中。
 
     adc_sum = 0;
-    for(uint32_t count = 2; count < ADC_NUM_MAX; count += 5)
+    for(uint32_t count = 2; count < ADC_NUM_MAX; count += 6)
     {
         adc_sum += (uint32_t)adc_buff[count];
     }
-    Rotation1_adc_mean = adc_sum / (ADC_NUM_MAX / 5);    // 计算ADC转换结果的平均值。这个平均值被存储到 Rotation1_adc_mean 变量中。
+    Rotation1_adc_mean = adc_sum / (ADC_NUM_MAX / 6);    // 计算ADC转换结果的平均值。这个平均值被存储到 Rotation1_adc_mean 变量中。
 
     adc_sum = 0;
-    for(uint32_t count = 3; count < ADC_NUM_MAX; count += 5)
+    for(uint32_t count = 3; count < ADC_NUM_MAX; count += 6)
     {
         adc_sum += (uint32_t)adc_buff[count];
     }
-    Rotation2_adc_mean = adc_sum / (ADC_NUM_MAX / 5);    // 计算ADC转换结果的平均值。这个平均值被存储到 Rotation1_adc_mean 变量中。
+    Rotation2_adc_mean = adc_sum / (ADC_NUM_MAX / 6);    // 计算ADC转换结果的平均值。这个平均值被存储到 Rotation2_adc_mean 变量中。
 
     adc_sum = 0;
-    for(uint32_t count = 4; count < ADC_NUM_MAX; count += 5)
+    for(uint32_t count = 4; count < ADC_NUM_MAX; count += 6)
     {
         adc_sum += (uint32_t)adc_buff[count];
     }
-    Rotation3_adc_mean = adc_sum / (ADC_NUM_MAX / 5);    // 计算ADC转换结果的平均值。这个平均值被存储到 Rotation1_adc_mean 变量中。
+    Rotation3_adc_mean = adc_sum / (ADC_NUM_MAX / 6);    // 计算ADC转换结果的平均值。这个平均值被存储到 Rotation3_adc_mean 变量中。
+
+    adc_sum = 0;
+    for(uint32_t count = 5; count < ADC_NUM_MAX; count += 6)
+    {
+        adc_sum += (uint32_t)adc_buff[count];
+    }
+    Dropping_adc_mean = adc_sum / (ADC_NUM_MAX / 6);    // 计算ADC转换结果的平均值。这个平均值被存储到 Dropping_adc_mean 变量中。
 
     HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc_buff, ADC_NUM_MAX);    // 开始 ADC 采样
-}
-
-/**
-  * @brief  获取电压值
-  * @param  无
-  * @retval 转换电压值
-  */
-float get_positionup_val(void)
-{
-    float vdc = GET_ADC_VAL(positionup_adc_mean);      // 获取电压值
-    return vdc;
-}
-
-/**
-  * @brief  获取电压值
-  * @param  无
-  * @retval 转换电压值
-  */
-float get_positiondown_val(void)
-{
-    float vdc = GET_ADC_VAL(positiondown_adc_mean);      // 获取电压值
-    return vdc;
 }

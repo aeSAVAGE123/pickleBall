@@ -1,8 +1,23 @@
-
+#include "bsp_adc.h"
 #include "bsp_key.h"
 #include "bsp_pid.h"
 #include "bsp_led.h"
 #include "bsp_usart.h"
+
+int downcurrent = 0;
+int upcurrent = 0;
+
+_Bool cnt1 = 1;
+_Bool cnt2 = 1;
+_Bool cnt3 = 1;
+_Bool cnt4 = 1;
+_Bool cnt5 = 1;
+
+_Bool upcnt1 = 1;
+_Bool upcnt2 = 1;
+_Bool upcnt3 = 1;
+_Bool upcnt4 = 1;
+_Bool upcnt5 = 1;
 /**
   * @brief  配置按键用到的I/O口
   * @param  无
@@ -156,6 +171,138 @@ void Key_control(void)
             set_motor5_disable();
         }
         LED5_TOGGLE
+    }
+}
+
+void Knob_control(void)
+{
+    if(speedflag == 1)
+    {
+        int32_t tempspeed = Rotation1_adc_mean;
+        if(tempspeed > 3000)
+        {
+            tempspeed = 3000;
+        }
+        set_motor1_speed(tempspeed);
+        set_motor2_speed(tempspeed);
+    }
+    if(Pid3flag == 1)
+    {
+        downcurrent = Rotation2_adc_mean;
+        if(downcurrent > 0 && downcurrent < 819)
+        {
+            if(cnt1 == 1)
+            {
+                set_pid_target3(&pid3,780);
+                cnt1 = 0;
+            }
+        } else
+        {
+            cnt1 = 1;
+        }
+        if(downcurrent >= 819 && downcurrent < 1638)
+        {
+            if(cnt2 == 1)
+            {
+                set_pid_target3(&pid3,1250);
+                cnt2 = 0;
+            }
+        } else
+        {
+            cnt2 = 1;
+        }
+        if(downcurrent >= 1638 && downcurrent < 2457)
+        {
+            if(cnt3 == 1)
+            {
+                set_pid_target3(&pid3,1600);
+                cnt3 = 0;
+            }
+        } else
+        {
+            cnt3 = 1;
+        }
+        if(downcurrent >= 2457 && downcurrent < 3276)
+        {
+            if(cnt4 == 1)
+            {
+                set_pid_target3(&pid3,1800);
+                cnt4 = 0;
+            }
+        } else
+        {
+            cnt4 = 1;
+        }
+        if(downcurrent >= 3276 && downcurrent < 4095)
+        {
+            if(cnt5 == 1)
+            {
+                set_pid_target3(&pid3,2400);
+                cnt5 = 0;
+            }
+        } else
+        {
+            cnt5 = 1;
+        }
+    }
+    if(Pid4flag == 1)
+    {
+        upcurrent = Rotation3_adc_mean;
+        if(upcurrent > 0 && upcurrent < 819)
+        {
+            if(upcnt1 == 1)
+            {
+                set_pid_target4(&pid4,700);
+                upcnt1 = 0;
+            }
+        } else
+        {
+            upcnt1 = 1;
+        }
+        if(upcurrent >= 819 && upcurrent < 1638)
+        {
+            if(upcnt2 == 1)
+            {
+                set_pid_target4(&pid4,1050);
+                upcnt2 = 0;
+            }
+        } else
+        {
+            upcnt2 = 1;
+        }
+        if(upcurrent >= 1638 && upcurrent < 2457)
+        {
+            if(upcnt3 == 1)
+            {
+                set_pid_target4(&pid4,1400);
+                upcnt3 = 0;
+            }
+        } else
+        {
+            upcnt3 = 1;
+        }
+        if(upcurrent >= 2457 && upcurrent < 3276)
+        {
+            if(upcnt4 == 1)
+            {
+                set_pid_target4(&pid4,1750);
+                upcnt4 = 0;
+            }
+        } else
+        {
+            upcnt4 = 1;
+        }
+        if(upcurrent >= 3276 && upcurrent < 4095)
+        {
+            if(upcnt5 == 1)
+            {
+                set_pid_target4(&pid4,2100);
+                upcnt5 = 0;
+            }
+        } else
+        {
+            upcnt5 = 1;
+        }
     }
 }
 /*********************************************END OF FILE**********************/

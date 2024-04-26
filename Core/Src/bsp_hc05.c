@@ -80,7 +80,7 @@ uint8_t BLE_Send_CMD(char* cmd,uint8_t clean)
                 }
                 else
                 {
-//                    clean_rebuff();
+
                 }
             }
             else
