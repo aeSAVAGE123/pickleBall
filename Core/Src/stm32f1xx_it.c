@@ -249,8 +249,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 //        set_computer_Speed_Location_value(Send_Speed_CMD,positionup_adc_mean);
 //        set_computer_Speed_Location_value(Send_Speed_CMD, Rotation1_adc_mean);
 //        set_computer_Speed_Location_value(Send_Speed_CMD, Rotation2_adc_mean);
-        set_computer_Speed_Location_value(Send_Speed_CMD, Rotation3_adc_mean);
-//        set_computer_Speed_Location_value(Send_Speed_CMD, Dropping_adc_mean);
+//        set_computer_Speed_Location_value(Send_Speed_CMD, Rotation3_adc_mean);
+        set_computer_Speed_Location_value(Send_Speed_CMD, Dropping_adc_mean);
         if (pid3_enable)
         {
             if (fabs(pid3.err) > 200)

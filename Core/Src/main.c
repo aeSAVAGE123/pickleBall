@@ -22,6 +22,28 @@ _Bool firststart;
 _Bool speedflag = 0;
 _Bool Pid3flag = 0;
 _Bool Pid4flag = 0;
+_Bool random_flag = 0;
+_Bool randomcnt1 = 1;
+
+
+typedef struct {
+    float horizontal;
+    float vertical;
+} Position;
+
+// 初始化定点数据
+Position positions[25] = {
+        {1100, 2500}, {1100, 1900}, {1100, 1738}, {1100, 1290}, {1100, 800},
+        {1100, 2250}, {1100, 1900}, {1100, 1591}, {1100, 745}, {1100, 789},
+        {1100, 2000}, {1100, 1750}, {1100, 1580}, {1100, 1200}, {1100, 1000},
+        {1100, 2100}, {1100, 1780}, {1100, 1530}, {1100, 1300}, {1100, 1200},
+        {1100, 1920}, {1100, 1720}, {1100, 1560}, {1100, 1230}, {1100, 800}
+};
+
+// 函数来生成指定范围内的随机数
+int generate_random_position() {
+    return rand() % 25; // 返回0到24之间的随机数
+}
 
 /**
   * @brief  The application entry point.
@@ -69,6 +91,31 @@ int main(void)
         Key_control();
         Knob_control();
         BLE_motor_control();
+        if(1 == random_flag)
+        {
+             if(Dropping_adc_mean < 400)
+             {
+                 HAL_Delay(500);
+                 randomcnt1 = 1;
+                 set_motor5_disable();
+             }
+/** 保证每个位置执行一次，要等待上方传感器产生低电平信号 */
+            if(1 == randomcnt1)
+            {
+                randomcnt1 = 0;
+                srand(HAL_GetTick()); // 初始化随机数发生器
+                int index = generate_random_position(); // 获取随机位置索引
+                Position selected_position = positions[index]; // 获取选定的位置数据
+
+                set_pid_target3(&pid3, selected_position.vertical);
+                set_pid_target4(&pid4, selected_position.horizontal);
+                HAL_Delay(2000);
+/** 两秒过后才打开电机的启动 */
+                set_motor5_direction(MOTOR_REV);
+                set_motor5_speed(3000);
+                set_motor5_enable();
+            }
+        }
     }
 }
 

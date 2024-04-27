@@ -2,7 +2,6 @@
 #include "bsp_key.h"
 #include "bsp_pid.h"
 #include "bsp_led.h"
-#include "bsp_usart.h"
 
 int downcurrent = 0;
 int upcurrent = 0;
@@ -145,16 +144,16 @@ void Key_control(void)
     /* 扫描KEY4 */
     if( Key_Scan(KEY4_GPIO_PORT, KEY4_PIN) == KEY_ON)
     {
-        uint16_t temp_val = get_pid_target(&pid3); // 获取当前PID目标值
-        if(temp_val <= 2200)
-        {
-            temp_val += 50; // 每次增加50
-            if(temp_val > 2200) {
-                temp_val = 2200; // 如果增加后的值大于2100，则将其设置为2100
-            }
-            set_pid_target3(&pid3, temp_val); // 设置新的PID目标值
-        }
         LED4_TOGGLE
+        if(random_flag == 1)
+        {
+            random_flag = 0;
+            set_motor5_disable();
+        }
+        else
+        {
+            random_flag = 1;
+        }
     }
 
     /* 扫描KEY5 */
