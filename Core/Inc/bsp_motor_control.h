@@ -116,8 +116,6 @@ void wakeup_motor(void);
 void sleep_motor(void);
 void motor_reset(void);
 
-void BLE_motor_control(void);
-
 void upward_control(void);
 void downward_control(void);
 void left_control(void);
