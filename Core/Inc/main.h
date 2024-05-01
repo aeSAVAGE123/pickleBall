@@ -37,7 +37,9 @@ extern _Bool firststart;
 extern _Bool speedflag;
 extern _Bool Pid3flag;
 extern _Bool Pid4flag;
-extern _Bool random_flag;
+extern _Bool all_random_flag;
+extern _Bool left_random_flag;
+extern _Bool right_random_flag;
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 

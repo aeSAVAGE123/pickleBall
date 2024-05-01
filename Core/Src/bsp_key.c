@@ -145,14 +145,14 @@ void Key_control(void)
     if( Key_Scan(KEY4_GPIO_PORT, KEY4_PIN) == KEY_ON)
     {
         LED4_TOGGLE
-        if(random_flag == 1)
+        if(all_random_flag == 1)
         {
-            random_flag = 0;
+            all_random_flag = 0;
             set_motor5_disable();
         }
         else
         {
-            random_flag = 1;
+            all_random_flag = 1;
         }
     }
 

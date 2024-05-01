@@ -128,6 +128,8 @@ void motor1_motor2_slowdown(void);
 void motor5_control(void);
 
 void motor_reset(void);
+void BLE_control(void);
+void random_control(void);
 
 void A1_control(void);
 void A2_control(void);
